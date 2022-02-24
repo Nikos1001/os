@@ -1,3 +1,4 @@
 .vscode/
 build/
 kernel8.img
+disks/

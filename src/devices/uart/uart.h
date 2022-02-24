@@ -3,6 +3,7 @@
 #define UART_H
 
 #include "../base.h"
+#include "../../util.h"
 
 #define UART_ENABLE (PERIPHERAL_BASE + 0x00215004)
 #define UART_MU_IO_REG (PERIPHERAL_BASE + 0x00215040)
@@ -21,5 +22,6 @@ void uart_init(void);
 void uart_putc(char c);
 void uart_puts(const char* s);
 void uart_putd(int d);
+void uart_puthex(uint d);
 
 #endif

@@ -37,10 +37,19 @@ void uart_putd(int d) {
     }
 }
 
+const char* uart_hexString = "0123456789abcdef";
+
+void uart_puthex(uint d) {
+    for(int i = 28; i >= 0; i -= 4) {
+        uint chunk = (d >> i) & 0xF;
+        uart_putc(uart_hexString[chunk]);
+    }
+}
+
 void uart_init(void) {
     gpio_selectFunction(14, 1);
     gpio_selectFunction(15, 1);
-    gpio_pushFunctions((1 << 14) | (1 << 15));
+    gpio_pushFunctions(0, (1 << 14) | (1 << 15)); // configure uart io pins
 
     put32(UART_ENABLE, 1); // enable miniuart
     put32(UART_MU_CNTL_REG, 0); // disable receive and transmit
