@@ -5,6 +5,8 @@
 #include "../base.h"
 #include "../../util.h"
 
+#define SD_SECTOR_SIZE 512
+
 #define SD_BASE (PERIPHERAL_BASE + 0x00300000)
 #define SD_BLKSIZECNT (SD_BASE + 0x4)
 #define SD_ARG1 (SD_BASE + 0x8)
@@ -107,7 +109,7 @@
 #define SD_ERROR -2
 
 int sd_init(void);
-int sd_readBlock(uint lba, uchar* buffer, uint num);
-int sd_writeBlock(uchar *buffer, uint lba, uint num);
+int sd_readSector(int core, uint lba, uchar* buffer, uint num);
+int sd_writeSector(int core, uchar *buffer, uint lba, uint num);
 
 #endif

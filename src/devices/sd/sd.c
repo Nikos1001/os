@@ -2,8 +2,11 @@
 #include "../gpio/gpio.h"
 #include "../uart/uart.h"
 #include "sd.h"
+#include "../../lock.h"
 
 ulong sd_scr[2], sd_ocr, sd_rca, sd_err, sd_hv;
+
+struct Lock sd_lock;
 
 int waitForCnt, timeout;
 #define WAIT_FOR(cond) \
@@ -87,7 +90,9 @@ int sd_cmd(uint code, uint arg) {
     return r & SD_CMD_ERRORS_MASK;
 }
 
-int sd_readBlock(uint lba, uchar *buffer, uint num) {
+int sd_readSector(int core, uint lba, uchar* buffer, uint num) {
+    waitLock(&sd_lock, core);
+
     if(num < 1)
         num = 1;
     if(sd_status(SD_SR_DAT_INHIBIT)) {
@@ -130,10 +135,14 @@ int sd_readBlock(uint lba, uchar *buffer, uint num) {
     }
     if(num > 1 && !(sd_scr[0] & SD_SCR_SUPP_SET_BLKCNT) && (sd_scr[0] & SD_SCR_SUPP_CCS))
         sd_cmd(SD_CMD_STOP_TRANS, 0);
-    return sd_err != SD_OK || c != num ? 0 : num*512;
+    
+    exitLock(&sd_lock, core);
+    return sd_err != SD_OK || c != num ? 0 : num * 512;
 }
 
-int sd_writeBlock(uchar *buffer, uint lba, uint num) {
+int sd_writeSector(int core, uchar *buffer, uint lba, uint num) {
+    waitLock(&sd_lock, core);
+
     int r;
     int c = 0;
     int d;
@@ -181,6 +190,8 @@ int sd_writeBlock(uchar *buffer, uint lba, uint num) {
     }
     if(num > 1 && !(sd_scr[0] & SD_SCR_SUPP_SET_BLKCNT) && (sd_scr[0] & SD_SCR_SUPP_CCS))
         sd_cmd(SD_CMD_STOP_TRANS, 0);
+
+    exitLock(&sd_lock, core);
     return sd_err != SD_OK || c != num ? 0 : num * 512;
 }
 
@@ -254,6 +265,8 @@ int sd_clk(uint f) {
 }
 
 int sd_init(void) {
+    initLock(&sd_lock);
+
     long ccs = 0;
 
     gpio_selectFunction(47, 0);
